@@ -216,7 +216,7 @@ export default function StorePlanPage() {
             </div>
             <Progress value={savingsPct} className="h-2" />
           </div>
-          {avg3Revenue > 0 && plan.netProfit > 0 && (
+          {avg3Revenue > 0 && (
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <TrendingUp className="w-3 h-3 text-primary" />
               At your current profit rate, you could hit your goal in ~

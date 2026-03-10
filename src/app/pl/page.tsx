@@ -172,7 +172,7 @@ export default function PLPage() {
           <h1 className="text-2xl font-bold">P&L Tracker</h1>
           <p className="text-sm text-muted-foreground">Log income and expenses, see your bottom line</p>
         </div>
-        <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+        <Select value={selectedMonth} onValueChange={(v) => v && setSelectedMonth(v)}>
           <SelectTrigger className="w-36">
             <SelectValue />
           </SelectTrigger>
