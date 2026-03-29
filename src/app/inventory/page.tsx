@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, CheckCircle2, Clock } from "lucide-react";
 
-const CHANNELS: Channel[] = ["Shopify Site", "7wonders - Sale", "Instagram", "In-Person - Venmo", "In-Person - Zelle", "In-Person - POS", "In-Person", "Website", "Other"];
+const CHANNELS: Channel[] = ["Shopify Site", "7wonders - Sale", "Instagram", "In-Person - Venmo", "In-Person - Zelle", "In-Person - POS", "In-Person", "Other"];
 const TODAY = "2026-03-09";
 
 const fmt = (n: number) =>

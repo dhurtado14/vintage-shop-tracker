@@ -1,7 +1,6 @@
 export type Channel =
   | "Shopify Site"
   | "7wonders - Sale"
-  | "Website"
   | "Instagram"
   | "In-Person"
   | "In-Person - Venmo"

@@ -35,7 +35,6 @@ const CHANNELS: Channel[] = [
   "In-Person - Zelle",
   "In-Person - POS",
   "In-Person",
-  "Website",
   "Other",
 ];
 
