@@ -46,6 +46,8 @@ const EXPENSE_CATS: ExpenseCategory[] = [
   "Shipping",
   "Packaging",
   "Marketing",
+  "Market Costs",
+  "Travel",
   "Subscriptions",
   "Photography",
   "Other",
