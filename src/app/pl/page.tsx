@@ -27,8 +27,6 @@ import { Plus, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 import { format, parse } from "date-fns";
 
 const CHANNELS: Channel[] = [
-  "Depop",
-  "Etsy",
   "Shopify Site",
   "7wonders - Sale",
   "Instagram",
@@ -123,7 +121,7 @@ export default function PLPage() {
 
   // Sale form
   const [sDate, setSDate] = useState(TODAY);
-  const [sChannel, setSChannel] = useState<Channel>("Depop");
+  const [sChannel, setSChannel] = useState<Channel>("Shopify Site");
   const [sDesc, setSDesc] = useState("");
   const [sAmount, setSAmount] = useState("");
   const [sCost, setSCost] = useState("");

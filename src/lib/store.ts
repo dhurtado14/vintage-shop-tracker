@@ -1,6 +1,4 @@
 export type Channel =
-  | "Depop"
-  | "Etsy"
   | "Shopify Site"
   | "7wonders - Sale"
   | "Website"
