@@ -15,6 +15,7 @@ import {
   RentalChannel,
   ExpenseCategory,
   RENTAL_FEE_RATES,
+  WONDERS_SALE_FEE_RATE,
 } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -148,15 +149,27 @@ export default function PLPage() {
 
   function addSale() {
     if (!sDesc || !sAmount) return;
+    const amount = parseFloat(sAmount);
     const entry: SaleEntry = {
       id: generateId(),
       date: sDate,
       channel: sChannel,
       description: sDesc,
-      amount: parseFloat(sAmount),
+      amount,
       itemCost: parseFloat(sCost) || 0,
     };
-    const updated = { ...data!, sales: [entry, ...data!.sales] };
+    let updated = { ...data!, sales: [entry, ...data!.sales] };
+    if (sChannel === "7wonders - Sale") {
+      const fee = amount * WONDERS_SALE_FEE_RATE;
+      const feeEntry: ExpenseEntry = {
+        id: generateId(),
+        date: sDate,
+        category: "Platform Fees",
+        description: `7wonders fee (24.57%) — ${sDesc}`,
+        amount: fee,
+      };
+      updated = { ...updated, expenses: [feeEntry, ...updated.expenses] };
+    }
     saveData(updated);
     setData(updated);
     setSDesc("");
@@ -318,6 +331,16 @@ export default function PLPage() {
                   />
                 </div>
               </div>
+              {sChannel === "7wonders - Sale" && sAmount && !isNaN(parseFloat(sAmount)) && (
+                <div className="bg-accent/40 rounded-md px-3 py-2 text-sm flex justify-between">
+                  <span className="text-muted-foreground">
+                    7wonders fee (22.3% + 2.27% Square)
+                  </span>
+                  <span className="font-semibold text-red-600">
+                    −{fmtDec(parseFloat(sAmount) * WONDERS_SALE_FEE_RATE)}
+                  </span>
+                </div>
+              )}
               <Button onClick={addSale} className="w-full gap-2">
                 <Plus className="w-4 h-4" /> Add Sale
               </Button>

@@ -28,6 +28,9 @@ export const RENTAL_FEE_RATES: Record<RentalChannel, number> = {
   "Other": 0.30,
 };
 
+// 7wonders collective cut (22.3%) + Square processing fee (2.27%)
+export const WONDERS_SALE_FEE_RATE = 0.2230 + 0.0227; // 0.2457
+
 export interface SaleEntry {
   id: string;
   date: string; // ISO date
