@@ -82,14 +82,14 @@ export function Dashboard() {
   const currentMonth = monthKeys[monthKeys.length - 1];
   const prevMonth = monthKeys[monthKeys.length - 2];
 
-  const curr = getMonthlyMetrics(data.sales, data.expenses, currentMonth);
-  const prev = getMonthlyMetrics(data.sales, data.expenses, prevMonth);
+  const curr = getMonthlyMetrics(data.sales, data.expenses, data.rentals, currentMonth);
+  const prev = getMonthlyMetrics(data.sales, data.expenses, data.rentals, prevMonth);
 
   const revTrend = curr.revenue > prev.revenue ? "up" : curr.revenue < prev.revenue ? "down" : "neutral";
   const profitTrend = curr.netProfit > prev.netProfit ? "up" : curr.netProfit < prev.netProfit ? "down" : "neutral";
 
   const chartData = monthKeys.map((key) => {
-    const m = getMonthlyMetrics(data.sales, data.expenses, key);
+    const m = getMonthlyMetrics(data.sales, data.expenses, data.rentals, key);
     const label = format(parse(key, "yyyy-MM", new Date()), "MMM");
     return { month: label, Revenue: m.revenue, "Net Profit": m.netProfit, "Gross Profit": m.grossProfit };
   });
@@ -99,7 +99,7 @@ export function Dashboard() {
   // Store readiness: how close is avg monthly revenue to break-even?
   const avg3Revenue =
     [monthKeys[3], monthKeys[4], monthKeys[5]]
-      .map((k) => getMonthlyMetrics(data.sales, data.expenses, k).revenue)
+      .map((k) => getMonthlyMetrics(data.sales, data.expenses, data.rentals, k).revenue)
       .reduce((a, b) => a + b, 0) / 3;
 
   const readinessPct = breakEvenRevenue > 0 ? Math.min((avg3Revenue / breakEvenRevenue) * 100, 100) : 0;

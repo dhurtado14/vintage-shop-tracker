@@ -83,7 +83,7 @@ export default function StorePlanPage() {
   const monthKeys = getLast6MonthKeys();
   const avg3Revenue =
     [monthKeys[3], monthKeys[4], monthKeys[5]]
-      .map((k) => getMonthlyMetrics(data.sales, data.expenses, k).revenue)
+      .map((k) => getMonthlyMetrics(data.sales, data.expenses, data.rentals, k).revenue)
       .reduce((a, b) => a + b, 0) / 3;
 
   const readinessPct = breakEvenRevenue > 0 ? Math.min((avg3Revenue / breakEvenRevenue) * 100, 100) : 0;

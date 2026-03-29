@@ -10,8 +10,11 @@ import {
   AppData,
   SaleEntry,
   ExpenseEntry,
+  RentalEntry,
   Channel,
+  RentalChannel,
   ExpenseCategory,
+  RENTAL_FEE_RATES,
 } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +26,22 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 import { format, parse } from "date-fns";
 
-const CHANNELS: Channel[] = ["Depop", "Etsy", "Website", "Instagram", "In-Person", "Other"];
+const CHANNELS: Channel[] = [
+  "Depop",
+  "Etsy",
+  "Shopify Site",
+  "7wonders - Sale",
+  "Instagram",
+  "In-Person - Venmo",
+  "In-Person - Zelle",
+  "In-Person - POS",
+  "In-Person",
+  "Website",
+  "Other",
+];
+
+const RENTAL_CHANNELS: RentalChannel[] = ["7wonders", "Other"];
+
 const EXPENSE_CATS: ExpenseCategory[] = [
   "Sourcing (COGS)",
   "Platform Fees",
@@ -38,10 +56,13 @@ const EXPENSE_CATS: ExpenseCategory[] = [
 const fmt = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
+const fmtDec = (n: number) =>
+  n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 const TODAY = "2026-03-09";
 
 function PLSummary({ data, monthKey }: { data: AppData; monthKey: string }) {
-  const m = getMonthlyMetrics(data.sales, data.expenses, monthKey);
+  const m = getMonthlyMetrics(data.sales, data.expenses, data.rentals, monthKey);
   const label = format(parse(monthKey, "yyyy-MM", new Date()), "MMMM yyyy");
   return (
     <Card>
@@ -50,7 +71,11 @@ function PLSummary({ data, monthKey }: { data: AppData; monthKey: string }) {
       </CardHeader>
       <CardContent>
         <div className="space-y-1 text-sm">
-          <Row label="Revenue" value={fmt(m.revenue)} />
+          <Row label="Sales Revenue" value={fmt(m.salesRevenue)} />
+          {m.rentalIncome > 0 && (
+            <Row label="Rental Income" value={fmt(m.rentalIncome)} />
+          )}
+          <Row label="Total Revenue" value={fmt(m.revenue)} bold />
           <Row label="Item Cost (COGS)" value={`−${fmt(m.cogs)}`} muted />
           <div className="border-t pt-1 mt-1">
             <Row label="Gross Profit" value={fmt(m.grossProfit)} bold />
@@ -103,6 +128,12 @@ export default function PLPage() {
   const [sAmount, setSAmount] = useState("");
   const [sCost, setSCost] = useState("");
 
+  // Rental form
+  const [rDate, setRDate] = useState(TODAY);
+  const [rChannel, setRChannel] = useState<RentalChannel>("7wonders");
+  const [rDesc, setRDesc] = useState("");
+  const [rListingPrice, setRListingPrice] = useState("");
+
   // Expense form
   const [eDate, setEDate] = useState(TODAY);
   const [eCat, setECat] = useState<ExpenseCategory>("Platform Fees");
@@ -133,6 +164,26 @@ export default function PLPage() {
     setSCost("");
   }
 
+  function addRental() {
+    if (!rDesc || !rListingPrice) return;
+    const listingPrice = parseFloat(rListingPrice);
+    const rate = RENTAL_FEE_RATES[rChannel];
+    const rentalFee = listingPrice * rate;
+    const entry: RentalEntry = {
+      id: generateId(),
+      date: rDate,
+      channel: rChannel,
+      description: rDesc,
+      itemListingPrice: listingPrice,
+      rentalFee,
+    };
+    const updated = { ...data!, rentals: [entry, ...data!.rentals] };
+    saveData(updated);
+    setData(updated);
+    setRDesc("");
+    setRListingPrice("");
+  }
+
   function addExpense() {
     if (!eDesc || !eAmount) return;
     const entry: ExpenseEntry = {
@@ -155,6 +206,12 @@ export default function PLPage() {
     setData(updated);
   }
 
+  function deleteRental(id: string) {
+    const updated = { ...data!, rentals: data!.rentals.filter((r) => r.id !== id) };
+    saveData(updated);
+    setData(updated);
+  }
+
   function deleteExpense(id: string) {
     const updated = { ...data!, expenses: data!.expenses.filter((e) => e.id !== id) };
     saveData(updated);
@@ -163,7 +220,13 @@ export default function PLPage() {
 
   const monthKeys = getLast6MonthKeys();
   const filteredSales = data.sales.filter((s) => s.date.startsWith(selectedMonth));
+  const filteredRentals = data.rentals.filter((r) => r.date.startsWith(selectedMonth));
   const filteredExpenses = data.expenses.filter((e) => e.date.startsWith(selectedMonth));
+
+  const rentalFeePreview =
+    rListingPrice && !isNaN(parseFloat(rListingPrice))
+      ? parseFloat(rListingPrice) * RENTAL_FEE_RATES[rChannel]
+      : null;
 
   return (
     <div className="space-y-6">
@@ -192,6 +255,9 @@ export default function PLPage() {
         <TabsList className="w-full">
           <TabsTrigger value="sales" className="flex-1">
             Sales ({filteredSales.length})
+          </TabsTrigger>
+          <TabsTrigger value="rentals" className="flex-1">
+            Rentals ({filteredRentals.length})
           </TabsTrigger>
           <TabsTrigger value="expenses" className="flex-1">
             Expenses ({filteredExpenses.length})
@@ -291,6 +357,97 @@ export default function PLPage() {
                   </Card>
                 );
               })}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Rentals tab */}
+        <TabsContent value="rentals" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold">Log a Rental</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Rental fee is automatically calculated — 35% at 7wonders, 30% elsewhere. Item stays in your inventory.
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Date</Label>
+                  <Input type="date" value={rDate} onChange={(e) => setRDate(e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Venue</Label>
+                  <Select value={rChannel} onValueChange={(v) => setRChannel(v as RentalChannel)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {RENTAL_CHANNELS.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Item description</Label>
+                <Input
+                  placeholder="e.g. Vintage YSL blazer"
+                  value={rDesc}
+                  onChange={(e) => setRDesc(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Item listing price ($)</Label>
+                <Input
+                  type="number"
+                  placeholder="200"
+                  value={rListingPrice}
+                  onChange={(e) => setRListingPrice(e.target.value)}
+                />
+              </div>
+              {rentalFeePreview !== null && (
+                <div className="bg-accent/40 rounded-md px-3 py-2 text-sm flex justify-between">
+                  <span className="text-muted-foreground">
+                    Rental fee ({(RENTAL_FEE_RATES[rChannel] * 100).toFixed(0)}% of listing price)
+                  </span>
+                  <span className="font-semibold">{fmtDec(rentalFeePreview)}</span>
+                </div>
+              )}
+              <Button onClick={addRental} className="w-full gap-2">
+                <Plus className="w-4 h-4" /> Add Rental
+              </Button>
+            </CardContent>
+          </Card>
+
+          {filteredRentals.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">No rentals for this month yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {filteredRentals.map((r) => (
+                <Card key={r.id}>
+                  <CardContent className="py-3 flex items-center justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium truncate">{r.description}</span>
+                        <Badge variant="secondary" className="text-xs shrink-0">{r.channel}</Badge>
+                      </div>
+                      <div className="flex gap-3 text-xs text-muted-foreground mt-0.5">
+                        <span>{r.date}</span>
+                        <span>Listing: {fmt(r.itemListingPrice)}</span>
+                        <span>{(RENTAL_FEE_RATES[r.channel] * 100).toFixed(0)}% fee</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="font-semibold text-sm">{fmtDec(r.rentalFee)}</span>
+                      <button onClick={() => deleteRental(r.id)} className="text-muted-foreground hover:text-destructive">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </TabsContent>
