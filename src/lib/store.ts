@@ -57,6 +57,7 @@ export interface RentalEntry {
 export interface InventoryItem {
   id: string;
   name: string;
+  code?: string;
   purchaseDate: string;
   purchasePrice: number;
   listingPrice: number;

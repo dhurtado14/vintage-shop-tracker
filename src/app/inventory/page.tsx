@@ -38,6 +38,7 @@ export default function InventoryPage() {
   const [filterStatus, setFilterStatus] = useState<"All" | InventoryItem["status"]>("All");
 
   const [name, setName] = useState("");
+  const [code, setCode] = useState("");
   const [purchaseDate, setPurchaseDate] = useState(TODAY);
   const [purchasePrice, setPurchasePrice] = useState("");
   const [listingPrice, setListingPrice] = useState("");
@@ -54,6 +55,7 @@ export default function InventoryPage() {
     const item: InventoryItem = {
       id: generateId(),
       name,
+      ...(code ? { code } : {}),
       purchaseDate,
       purchasePrice: parseFloat(purchasePrice),
       listingPrice: parseFloat(listingPrice),
@@ -64,6 +66,7 @@ export default function InventoryPage() {
     saveData(updated);
     setData(updated);
     setName("");
+    setCode("");
     setPurchasePrice("");
     setListingPrice("");
   }
@@ -133,13 +136,23 @@ export default function InventoryPage() {
           <CardTitle className="text-sm font-semibold">Add Item</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="space-y-1">
-            <Label className="text-xs">Item name</Label>
-            <Input
-              placeholder="e.g. Vintage Levi's 501 Jeans"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+          <div className="grid grid-cols-[1fr_auto] gap-3 items-end">
+            <div className="space-y-1">
+              <Label className="text-xs">Item name</Label>
+              <Input
+                placeholder="e.g. Vintage Levi's 501 Jeans"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1 w-28">
+              <Label className="text-xs">Code #</Label>
+              <Input
+                placeholder="e.g. J-042"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+              />
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -220,6 +233,11 @@ export default function InventoryPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-sm font-medium">{item.name}</span>
+                      {item.code && (
+                        <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
+                          #{item.code}
+                        </span>
+                      )}
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor[item.status]}`}
                       >
