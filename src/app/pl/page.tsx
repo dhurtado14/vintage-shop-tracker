@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  loadData,
-  saveData,
   generateId,
   getMonthlyMetrics,
   getLast6MonthKeys,
@@ -17,6 +15,15 @@ import {
   RENTAL_FEE_RATES,
   WONDERS_SALE_FEE_RATE,
 } from "@/lib/store";
+import {
+  loadAllData,
+  insertSale,
+  insertExpense,
+  insertRental,
+  deleteSale as dbDeleteSale,
+  deleteExpense as dbDeleteExpense,
+  deleteRental as dbDeleteRental,
+} from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +66,7 @@ const fmt = (n: number) =>
 const fmtDec = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-const TODAY = "2026-03-09";
+const TODAY = new Date().toISOString().slice(0, 10);
 
 function PLSummary({ data, monthKey }: { data: AppData; monthKey: string }) {
   const m = getMonthlyMetrics(data.sales, data.expenses, data.rentals, monthKey);
@@ -141,12 +148,12 @@ export default function PLPage() {
   const [eAmount, setEAmount] = useState("");
 
   useEffect(() => {
-    setData(loadData());
+    loadAllData().then(setData);
   }, []);
 
   if (!data) return null;
 
-  function addSale() {
+  async function addSale() {
     if (!sDesc || !sAmount) return;
     const amount = parseFloat(sAmount);
     const entry: SaleEntry = {
@@ -157,26 +164,32 @@ export default function PLPage() {
       amount,
       itemCost: parseFloat(sCost) || 0,
     };
-    let updated = { ...data!, sales: [entry, ...data!.sales] };
+
+    // Optimistic update
+    let optimistic = { ...data!, sales: [entry, ...data!.sales] };
+    let feeEntry: ExpenseEntry | null = null;
     if (sChannel === "7wonders - Sale") {
       const fee = amount * WONDERS_SALE_FEE_RATE;
-      const feeEntry: ExpenseEntry = {
+      feeEntry = {
         id: generateId(),
         date: sDate,
         category: "Platform Fees",
         description: `7wonders fee (24.57%) — ${sDesc}`,
         amount: fee,
       };
-      updated = { ...updated, expenses: [feeEntry, ...updated.expenses] };
+      optimistic = { ...optimistic, expenses: [feeEntry, ...optimistic.expenses] };
     }
-    saveData(updated);
-    setData(updated);
+    setData(optimistic);
     setSDesc("");
     setSAmount("");
     setSCost("");
+
+    // Persist
+    await insertSale(entry);
+    if (feeEntry) await insertExpense(feeEntry);
   }
 
-  function addRental() {
+  async function addRental() {
     if (!rDesc || !rListingPrice) return;
     const listingPrice = parseFloat(rListingPrice);
     const rate = RENTAL_FEE_RATES[rChannel];
@@ -189,14 +202,13 @@ export default function PLPage() {
       itemListingPrice: listingPrice,
       rentalFee,
     };
-    const updated = { ...data!, rentals: [entry, ...data!.rentals] };
-    saveData(updated);
-    setData(updated);
+    setData((d) => d && { ...d, rentals: [entry, ...d.rentals] });
     setRDesc("");
     setRListingPrice("");
+    await insertRental(entry);
   }
 
-  function addExpense() {
+  async function addExpense() {
     if (!eDesc || !eAmount) return;
     const entry: ExpenseEntry = {
       id: generateId(),
@@ -205,29 +217,25 @@ export default function PLPage() {
       description: eDesc,
       amount: parseFloat(eAmount),
     };
-    const updated = { ...data!, expenses: [entry, ...data!.expenses] };
-    saveData(updated);
-    setData(updated);
+    setData((d) => d && { ...d, expenses: [entry, ...d.expenses] });
     setEDesc("");
     setEAmount("");
+    await insertExpense(entry);
   }
 
-  function deleteSale(id: string) {
-    const updated = { ...data!, sales: data!.sales.filter((s) => s.id !== id) };
-    saveData(updated);
-    setData(updated);
+  async function deleteSale(id: string) {
+    setData((d) => d && { ...d, sales: d.sales.filter((s) => s.id !== id) });
+    await dbDeleteSale(id);
   }
 
-  function deleteRental(id: string) {
-    const updated = { ...data!, rentals: data!.rentals.filter((r) => r.id !== id) };
-    saveData(updated);
-    setData(updated);
+  async function deleteRental(id: string) {
+    setData((d) => d && { ...d, rentals: d.rentals.filter((r) => r.id !== id) });
+    await dbDeleteRental(id);
   }
 
-  function deleteExpense(id: string) {
-    const updated = { ...data!, expenses: data!.expenses.filter((e) => e.id !== id) };
-    saveData(updated);
-    setData(updated);
+  async function deleteExpense(id: string) {
+    setData((d) => d && { ...d, expenses: d.expenses.filter((e) => e.id !== id) });
+    await dbDeleteExpense(id);
   }
 
   const monthKeys = getLast6MonthKeys();

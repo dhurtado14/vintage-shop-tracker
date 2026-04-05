@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import {
-  loadData,
   getMonthlyMetrics,
   getLast6MonthKeys,
   getStorePlanMetrics,
   AppData,
 } from "@/lib/store";
+import { loadAllData } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -73,7 +73,7 @@ export function Dashboard() {
   const [data, setData] = useState<AppData | null>(null);
 
   useEffect(() => {
-    setData(loadData());
+    loadAllData().then(setData);
   }, []);
 
   if (!data) return null;

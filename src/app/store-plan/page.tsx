@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from "react";
 import {
-  loadData,
-  saveData,
   getStorePlanMetrics,
   getMonthlyMetrics,
   getLast6MonthKeys,
   AppData,
   StorePlanConfig,
 } from "@/lib/store";
+import { loadAllData, upsertStorePlan } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,9 +56,10 @@ export default function StorePlanPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const d = loadData();
-    setData(d);
-    setPlan({ ...d.storePlan });
+    loadAllData().then((d) => {
+      setData(d);
+      setPlan({ ...d.storePlan });
+    });
   }, []);
 
   if (!data || !plan) return null;
@@ -69,10 +69,9 @@ export default function StorePlanPage() {
     setSaved(false);
   }
 
-  function savePlan() {
-    const updated = { ...data!, storePlan: plan! };
-    saveData(updated);
-    setData(updated);
+  async function savePlan() {
+    await upsertStorePlan(plan!);
+    setData((d) => d && { ...d, storePlan: plan! });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }

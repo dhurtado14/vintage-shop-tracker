@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from "react";
 import {
-  loadData,
-  saveData,
   generateId,
   AppData,
   InventoryItem,
   Channel,
 } from "@/lib/store";
+import {
+  loadAllData,
+  insertInventoryItem,
+  updateInventoryItem,
+  deleteInventoryItem,
+} from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, CheckCircle2, Clock } from "lucide-react";
 
 const CHANNELS: Channel[] = ["Shopify Site", "7wonders - Sale", "Instagram", "In-Person - Venmo", "In-Person - Zelle", "In-Person - POS", "In-Person", "Other"];
-const TODAY = "2026-03-09";
+const TODAY = new Date().toISOString().slice(0, 10);
 
 const fmt = (n: number) =>
   n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
@@ -45,12 +49,12 @@ export default function InventoryPage() {
   const [channel, setChannel] = useState<Channel>("Shopify Site");
 
   useEffect(() => {
-    setData(loadData());
+    loadAllData().then(setData);
   }, []);
 
   if (!data) return null;
 
-  function addItem() {
+  async function addItem() {
     if (!name || !purchasePrice || !listingPrice) return;
     const item: InventoryItem = {
       id: generateId(),
@@ -62,30 +66,37 @@ export default function InventoryPage() {
       channel,
       status: "Listed",
     };
-    const updated = { ...data!, inventory: [item, ...data!.inventory] };
-    saveData(updated);
-    setData(updated);
+    setData((d) => d && { ...d, inventory: [item, ...d.inventory] });
     setName("");
     setCode("");
     setPurchasePrice("");
     setListingPrice("");
+    await insertInventoryItem(item);
   }
 
-  function markSold(id: string) {
-    const updated = {
-      ...data!,
-      inventory: data!.inventory.map((i) =>
-        i.id === id ? { ...i, status: "Sold" as const, soldDate: TODAY, soldPrice: i.listingPrice } : i
-      ),
-    };
-    saveData(updated);
-    setData(updated);
+  async function markSold(id: string) {
+    let soldItem: InventoryItem | undefined;
+    setData((d) => {
+      if (!d) return d;
+      const inventory = d.inventory.map((i) => {
+        if (i.id === id) {
+          soldItem = { ...i, status: "Sold" as const, soldDate: TODAY, soldPrice: i.listingPrice };
+          return soldItem;
+        }
+        return i;
+      });
+      return { ...d, inventory };
+    });
+    // Persist after state update — use the item from current data
+    const item = data!.inventory.find((i) => i.id === id);
+    if (item) {
+      await updateInventoryItem({ ...item, status: "Sold", soldDate: TODAY, soldPrice: item.listingPrice });
+    }
   }
 
-  function deleteItem(id: string) {
-    const updated = { ...data!, inventory: data!.inventory.filter((i) => i.id !== id) };
-    saveData(updated);
-    setData(updated);
+  async function deleteItem(id: string) {
+    setData((d) => d && { ...d, inventory: d.inventory.filter((i) => i.id !== id) });
+    await deleteInventoryItem(id);
   }
 
   const filtered =

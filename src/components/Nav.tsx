@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, TrendingUp, Package, Store } from "lucide-react";
+import { LayoutDashboard, TrendingUp, Package, Store, LogOut } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const links = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -13,6 +14,10 @@ const links = [
 
 export function Nav() {
   const pathname = usePathname();
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+  }
 
   return (
     <header className="border-b bg-card shadow-sm">
@@ -42,6 +47,13 @@ export function Nav() {
                 </Link>
               );
             })}
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors text-muted-foreground hover:text-foreground hover:bg-secondary"
+              title="Sign out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
           </nav>
         </div>
       </div>

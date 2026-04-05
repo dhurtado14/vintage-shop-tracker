@@ -90,7 +90,7 @@ export interface AppData {
   rentals: RentalEntry[];
 }
 
-const DEFAULT_STORE_PLAN: StorePlanConfig = {
+export const DEFAULT_STORE_PLAN: StorePlanConfig = {
   monthlyRent: 5000,
   utilities: 400,
   insurance: 300,
