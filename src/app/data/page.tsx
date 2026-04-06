@@ -57,6 +57,23 @@ const VALID_EXPENSE_CATEGORIES: ExpenseCategory[] = [
 ];
 const VALID_RENTAL_CHANNELS: RentalChannel[] = ["7wonders", "Other"];
 
+// Case-insensitive lookup helpers — returns the canonical value or the fallback
+function matchChannel(val: string): Channel {
+  return (
+    VALID_CHANNELS.find((c) => c.toLowerCase() === val.toLowerCase()) ?? "Other"
+  );
+}
+function matchExpenseCategory(val: string): ExpenseCategory {
+  return (
+    VALID_EXPENSE_CATEGORIES.find((c) => c.toLowerCase() === val.toLowerCase()) ?? "Other"
+  );
+}
+function matchRentalChannel(val: string): RentalChannel {
+  return (
+    VALID_RENTAL_CHANNELS.find((c) => c.toLowerCase() === val.toLowerCase()) ?? "Other"
+  );
+}
+
 // ---- CSV column definitions ----
 
 const SALE_HEADERS = ["date", "channel", "description", "amount", "item_cost"];
@@ -316,9 +333,7 @@ export default function DataPage() {
       const sale: SaleEntry = {
         id: generateId(),
         date: row.date,
-        channel: VALID_CHANNELS.includes(row.channel as Channel)
-          ? (row.channel as Channel)
-          : "Other",
+        channel: matchChannel(row.channel ?? ""),
         description: row.description,
         amount,
         itemCost: parseFloat(row.item_cost) || 0,
@@ -342,11 +357,7 @@ export default function DataPage() {
       const expense: ExpenseEntry = {
         id: generateId(),
         date: row.date,
-        category: VALID_EXPENSE_CATEGORIES.includes(
-          row.category as ExpenseCategory
-        )
-          ? (row.category as ExpenseCategory)
-          : "Other",
+        category: matchExpenseCategory(row.category ?? ""),
         description: row.description,
         amount,
       };
@@ -366,11 +377,7 @@ export default function DataPage() {
         skipped++;
         continue;
       }
-      const channel: RentalChannel = VALID_RENTAL_CHANNELS.includes(
-        row.channel as RentalChannel
-      )
-        ? (row.channel as RentalChannel)
-        : "Other";
+      const channel: RentalChannel = matchRentalChannel(row.channel ?? "");
       const rentalFee =
         parseFloat(row.rental_fee) ||
         listingPrice * (channel === "7wonders" ? 0.35 : 0.3);
@@ -414,9 +421,7 @@ export default function DataPage() {
         purchaseDate: row.purchase_date,
         purchasePrice,
         listingPrice,
-        channel: VALID_CHANNELS.includes(row.channel as Channel)
-          ? (row.channel as Channel)
-          : "Other",
+        channel: matchChannel(row.channel ?? ""),
         status,
         soldDate: row.sold_date || undefined,
         soldPrice: row.sold_price ? parseFloat(row.sold_price) : undefined,
