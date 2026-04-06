@@ -9,6 +9,7 @@ import {
   StorePlanConfig,
 } from "@/lib/store";
 import { loadAllData, upsertStorePlan } from "@/lib/db";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,7 +63,7 @@ export default function StorePlanPage() {
     });
   }, []);
 
-  if (!data || !plan) return null;
+  if (!data || !plan) return <LoadingSkeleton />;
 
   function updatePlan(key: keyof StorePlanConfig, value: number) {
     setPlan((p) => ({ ...p!, [key]: value }));

@@ -8,6 +8,7 @@ import {
   AppData,
 } from "@/lib/store";
 import { loadAllData } from "@/lib/db";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -76,7 +77,7 @@ export function Dashboard() {
     loadAllData().then(setData);
   }, []);
 
-  if (!data) return null;
+  if (!data) return <LoadingSkeleton />;
 
   const monthKeys = getLast6MonthKeys();
   const currentMonth = monthKeys[monthKeys.length - 1];

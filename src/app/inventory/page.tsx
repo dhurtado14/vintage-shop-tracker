@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, CheckCircle2, Clock } from "lucide-react";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 
 const CHANNELS: Channel[] = ["Shopify Site", "7wonders - Sale", "Instagram", "In-Person - Venmo", "In-Person - Zelle", "In-Person - POS", "In-Person", "Other"];
 const TODAY = new Date().toISOString().slice(0, 10);
@@ -52,7 +53,7 @@ export default function InventoryPage() {
     loadAllData().then(setData);
   }, []);
 
-  if (!data) return null;
+  if (!data) return <LoadingSkeleton />;
 
   async function addItem() {
     if (!name || !purchasePrice || !listingPrice) return;

@@ -159,12 +159,31 @@ export function getMonthlyMetrics(
   return { revenue, salesRevenue, rentalIncome, cogs, operatingExpenses, grossProfit, netProfit, grossMargin };
 }
 
+export function getCurrentMonthKey(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export function getLast6MonthKeys(): string[] {
   const keys: string[] = [];
-  const now = new Date(2026, 2, 9); // use today's date from context
+  const now = new Date();
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+  }
+  return keys;
+}
+
+/** Returns every month key from fromKey to toKey inclusive, ascending. */
+export function getMonthKeyRange(fromKey: string, toKey: string): string[] {
+  const keys: string[] = [];
+  const [fy, fm] = fromKey.split("-").map(Number);
+  const [ty, tm] = toKey.split("-").map(Number);
+  let y = fy, m = fm;
+  while (y < ty || (y === ty && m <= tm)) {
+    keys.push(`${y}-${String(m).padStart(2, "0")}`);
+    m++;
+    if (m > 12) { m = 1; y++; }
   }
   return keys;
 }

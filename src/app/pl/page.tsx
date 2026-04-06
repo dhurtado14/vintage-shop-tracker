@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import {
   generateId,
   getMonthlyMetrics,
-  getLast6MonthKeys,
+  getCurrentMonthKey,
+  getMonthKeyRange,
   AppData,
   SaleEntry,
   ExpenseEntry,
@@ -32,6 +33,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, TrendingUp, TrendingDown } from "lucide-react";
+import { LoadingSkeleton } from "@/components/LoadingSkeleton";
 import { format, parse } from "date-fns";
 
 const CHANNELS: Channel[] = [
@@ -126,7 +128,7 @@ function Row({
 
 export default function PLPage() {
   const [data, setData] = useState<AppData | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState(getLast6MonthKeys()[5]);
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey());
 
   // Sale form
   const [sDate, setSDate] = useState(TODAY);
@@ -151,7 +153,7 @@ export default function PLPage() {
     loadAllData().then(setData);
   }, []);
 
-  if (!data) return null;
+  if (!data) return <LoadingSkeleton />;
 
   async function addSale() {
     if (!sDesc || !sAmount) return;
@@ -238,7 +240,19 @@ export default function PLPage() {
     await dbDeleteExpense(id);
   }
 
-  const monthKeys = getLast6MonthKeys();
+  // Build dropdown range: from earliest record in any table → current month, newest first
+  const currentMonthKey = getCurrentMonthKey();
+  const allMonthsInData = [
+    ...data.sales.map((s) => s.date.slice(0, 7)),
+    ...data.expenses.map((e) => e.date.slice(0, 7)),
+    ...data.rentals.map((r) => r.date.slice(0, 7)),
+  ];
+  const earliestMonth =
+    allMonthsInData.length > 0
+      ? allMonthsInData.reduce((a, b) => (a < b ? a : b))
+      : currentMonthKey;
+  const monthKeys = getMonthKeyRange(earliestMonth, currentMonthKey).reverse();
+
   const filteredSales = data.sales.filter((s) => s.date.startsWith(selectedMonth));
   const filteredRentals = data.rentals.filter((r) => r.date.startsWith(selectedMonth));
   const filteredExpenses = data.expenses.filter((e) => e.date.startsWith(selectedMonth));
