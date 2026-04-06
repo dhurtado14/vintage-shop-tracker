@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, TrendingUp, Package, Store, LogOut } from "lucide-react";
+import { LayoutDashboard, TrendingUp, Package, Store, Database, LogOut } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 const links = [
@@ -10,6 +10,7 @@ const links = [
   { href: "/pl", label: "P&L", icon: TrendingUp },
   { href: "/inventory", label: "Inventory", icon: Package },
   { href: "/store-plan", label: "Store Plan", icon: Store },
+  { href: "/data", label: "Data", icon: Database },
 ];
 
 export function Nav() {
